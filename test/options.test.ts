@@ -46,6 +46,16 @@ test("custom sidekick without permissions or copy gets safe defaults", () => {
   assert.ok(d.description.length > 0)
   assert.ok(d.prompt.length > 0)
 })
+test("explicit empty permissions gets safe defaults", () => {
+  const r = resolveOptions({ sidekicks: { docs: { model: "openai/gpt-5", permissions: [] } } })
+  const d = r.sidekicks.find((s) => s.id === "fusion-docs")!
+  assert.deepEqual(d.permissions, [{ action: "edit", resource: "*", effect: "deny" }, { action: "shell", resource: "*", effect: "deny" }])
+})
+test("all built-in agent ids are rejected as lead", () => {
+  for (const id of ["build", "plan", "general", "explore", "compaction", "title", "summary"]) {
+    assert.throws(() => resolveOptions({ lead: id }), /built-in/)
+  }
+})
 test("lead/sidekick collisions, built-in leads, and bad names are rejected", () => {
   assert.throws(() => resolveOptions({ lead: "fusion-writer", sidekicks: { writer: { model: "openai/gpt-5" } } }), /lead/)
   assert.throws(() => resolveOptions({ lead: "build" }), /built-in/)

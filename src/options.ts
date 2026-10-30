@@ -63,7 +63,7 @@ export const BUILTIN_SIDEKICKS: Record<string, BuiltinSidekick> = {
 
 const NAME_PATTERN = /^[a-z0-9][a-z0-9-]*$/
 const RESERVED_NAMES = new Set(["constructor", "prototype", "__proto__"])
-const BUILTIN_AGENT_IDS = new Set(["build", "plan"])
+const BUILTIN_AGENT_IDS = new Set(["build", "plan", "general", "explore", "compaction", "title", "summary"])
 
 function validateName(name: string): void {
   if (RESERVED_NAMES.has(name) || !NAME_PATTERN.test(name)) {
@@ -88,7 +88,7 @@ export function resolveOptions(options: {
   const sidekicks: ResolvedSidekick[] = names.map((name) => {
     const builtin = Object.hasOwn(BUILTIN_SIDEKICKS, name) ? BUILTIN_SIDEKICKS[name] : undefined
     const entry = user[name] ?? {}
-    const permissions = entry.permissions ?? builtin?.permissions ?? REVIEWER_PERMISSIONS
+    const permissions = entry.permissions?.length ? entry.permissions : builtin?.permissions ?? REVIEWER_PERMISSIONS
     return {
       name,
       id: `fusion-${name}`,
