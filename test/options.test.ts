@@ -1,7 +1,7 @@
 import test from "node:test"
 import assert from "node:assert/strict"
 
-import { resolveOptions } from "../src/options.ts"
+import { RESULT_CONTRACT, resolveOptions } from "../src/options.ts"
 
 test("defaults: lead fusion, five sidekicks, no models", () => {
   const r = resolveOptions({})
@@ -13,7 +13,8 @@ test("user model and per-key overrides win", () => {
   const r = resolveOptions({ sidekicks: { writer: { model: "anthropic/claude-sonnet-5-5", prompt: "custom" } } })
   const w = r.sidekicks.find((s) => s.id === "fusion-writer")!
   assert.equal(w.model, "anthropic/claude-sonnet-5-5")
-  assert.equal(w.prompt, "custom")
+  assert.ok(w.prompt.startsWith("custom\n\n"))
+  assert.ok(w.prompt.endsWith(RESULT_CONTRACT))
   assert.ok(w.description.length > 0) // default kept
 })
 test("custom sidekick is added", () => {
@@ -34,10 +35,20 @@ test("default permissions per role", () => {
   assert.deepEqual(by.search, [{ action: "edit", resource: "*", effect: "deny" }, { action: "shell", resource: "*", effect: "deny" }])
   assert.deepEqual(by.summarizer, [
     { action: "edit", resource: "*", effect: "deny" },
+    { action: "shell", resource: "*", effect: "deny" },
     { action: "webfetch", resource: "*", effect: "deny" },
     { action: "websearch", resource: "*", effect: "deny" },
-    { action: "shell", resource: "*", effect: "allow" },
   ])
+})
+test("every builtin prompt carries the result contract", () => {
+  const r = resolveOptions({})
+  for (const sidekick of r.sidekicks) {
+    assert.ok(sidekick.prompt.endsWith(RESULT_CONTRACT), sidekick.id)
+    assert.match(sidekick.prompt, /what you did or found/)
+    assert.match(sidekick.prompt, /files you touched/)
+    assert.match(sidekick.prompt, /commands or tests you ran/)
+    assert.match(sidekick.prompt, /confidence/)
+  }
 })
 test("custom sidekick without permissions or copy gets safe defaults", () => {
   const r = resolveOptions({ sidekicks: { docs: { model: "openai/gpt-5" } } })

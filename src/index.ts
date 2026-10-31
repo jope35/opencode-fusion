@@ -1,7 +1,7 @@
 import { Plugin } from "@opencode/plugin"
 
 import { registerAgents, type AgentEditorLike } from "./agents.ts"
-import { applyContextHook, applySubagentModelHook } from "./hooks.ts"
+import { applyContextHook, applySubagentModelHook, fusionRules } from "./hooks.ts"
 import { assertModelsKnown } from "./model.ts"
 import { resolveOptions, type ConfiguredSidekick } from "./options.ts"
 
@@ -26,8 +26,9 @@ export async function setup(ctx: FusionContext): Promise<void> {
   await ctx.agent.transform((editor) => registerAgents(editor, leadId, withModel))
 
   const models = new Map(withModel.map((s) => [s.id, s.model]))
+  const rules = fusionRules(withModel)
   await ctx.tool.hook("execute.before", (event) => applySubagentModelHook(event, models))
-  await ctx.session.hook("context", (event) => applyContextHook(event, leadId))
+  await ctx.session.hook("context", (event) => applyContextHook(event, leadId, rules))
 }
 
 const _context: (ctx: Plugin.Context) => Promise<void> = setup

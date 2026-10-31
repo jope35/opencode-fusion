@@ -64,6 +64,15 @@ test("valid options register agents and hooks", async () => {
   assert.equal(hooks.tool.length, 1)
   assert.equal(hooks.session.length, 1)
 })
+test("context rules name only registered sidekicks", async () => {
+  const { ctx, hooks } = makeFakeCtx({ sidekicks: { writer: { model: "anthropic/claude-sonnet-5-5" } } })
+  await setup(ctx)
+  const event = { agent: "fusion", system: [{ type: "text" as const, text: "base" }] }
+  for (const hook of hooks.session) hook(event)
+  const rules = event.system.at(-1)!.text
+  assert.match(rules, /fusion-writer/)
+  assert.doesNotMatch(rules, /fusion-reviewer|fusion-reader|fusion-search|fusion-summarizer/)
+})
 test("unknown sidekick model rejects and names sidekick and model", async () => {
   const { ctx, editor } = makeFakeCtx({ sidekicks: { writer: { model: "acme/nope" } } })
   await assert.rejects(setup(ctx), (e: Error) => e.message.includes("writer") && e.message.includes("acme/nope"))

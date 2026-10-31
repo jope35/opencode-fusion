@@ -35,6 +35,9 @@ cd /tmp/opencode-fusion-smoke
 - [x] `fusion-writer` appears in the subagent catalog (not hidden).
 - [x] A prompt to the lead that asks it to edit a file is denied (permission deny), and a subagent call to `fusion-writer` runs on the configured model (visible in the child session).
 - [x] With a bogus sidekick model (`"acme/nope"`), startup marks the plugin failed: `opencode api plugin.list` shows `state.status === "failed"` with the sidekick/model error, the TUI shows the built-in "Plugin failed" toast, and `/plugins` displays the error text.
+- [ ] A sidekick cannot call another `fusion-*` sidekick (including itself): run `opencode run --agent fusion-writer "Call the subagent tool with agent fusion-writer"` and expect a `subagent` permission deny.
+- [ ] With only `writer` configured, the lead's system prompt names only `fusion-writer` and does not mention the other built-ins.
+- [ ] An existing user agent named `fusion` (or a configured sidekick id) makes startup fail with a collision error instead of being overwritten.
 
 ## Results (2026-10-30)
 

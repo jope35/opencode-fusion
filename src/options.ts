@@ -33,6 +33,9 @@ const allow = (action: string): PermissionRule => ({ action, resource: "*", effe
 
 const REVIEWER_PERMISSIONS: PermissionRule[] = [deny("edit"), deny("shell")]
 
+export const RESULT_CONTRACT =
+  "Finish with a standard report envelope: what you did or found, the files you touched, the commands or tests you ran and their outcome, and your confidence (high, medium or low). State clearly anything you could not verify."
+
 export const BUILTIN_SIDEKICKS: Record<string, BuiltinSidekick> = {
   writer: {
     description: "Implements code changes and writes tests.",
@@ -57,7 +60,7 @@ export const BUILTIN_SIDEKICKS: Record<string, BuiltinSidekick> = {
   summarizer: {
     description: "Summarizes content concisely.",
     prompt: "You summarize the given content concisely, keeping the facts that matter.",
-    permissions: [deny("edit"), deny("webfetch"), deny("websearch"), allow("shell")],
+    permissions: [deny("edit"), deny("shell"), deny("webfetch"), deny("websearch")],
   },
 }
 
@@ -89,12 +92,13 @@ export function resolveOptions(options: {
     const builtin = Object.hasOwn(BUILTIN_SIDEKICKS, name) ? BUILTIN_SIDEKICKS[name] : undefined
     const entry = user[name] ?? {}
     const permissions = entry.permissions?.length ? entry.permissions : builtin?.permissions ?? REVIEWER_PERMISSIONS
+    const prompt = entry.prompt ?? builtin?.prompt ?? `You are the ${name} sidekick. Do the ${name} work you are given and report back.`
     return {
       name,
       id: `fusion-${name}`,
       model: entry.model,
       description: entry.description ?? builtin?.description ?? `${name} sidekick.`,
-      prompt: entry.prompt ?? builtin?.prompt ?? `You are the ${name} sidekick. Do the ${name} work you are given and report back.`,
+      prompt: `${prompt}\n\n${RESULT_CONTRACT}`,
       permissions: permissions.map((rule) => ({ ...rule })),
     }
   })
